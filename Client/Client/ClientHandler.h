@@ -5,8 +5,7 @@
 #include "SocketHandler.h"
 #include "Protocol.h"
 #include <vector>
-
-
+#include <filesystem>
 
 class ClientHandler {
 private:
@@ -20,7 +19,8 @@ public:
     bool firstTimeRegistration();
     bool reConnect();
     bool sendRSA();
-    bool receiveAES();
+    bool receiveAES(std::vector<uint8_t> receivedData);
+    bool sendFile();
 };
 
 #endif // CLIENT_HANDLER_H

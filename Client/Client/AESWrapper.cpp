@@ -8,23 +8,13 @@
 #include <immintrin.h>	// _rdrand32_step
 
 
-unsigned char* AESWrapper::GenerateKey(unsigned char* buffer, unsigned int length)
-{
-	for (size_t i = 0; i < length; i += sizeof(unsigned int))
-		_rdrand32_step(reinterpret_cast<unsigned int*>(&buffer[i]));
-	return buffer;
-}
 
-AESWrapper::AESWrapper()
+AESWrapper::AESWrapper(){}
+AESWrapper::AESWrapper(const std::string& key)
 {
-	GenerateKey(_key, DEFAULT_KEYLENGTH);
-}
-
-AESWrapper::AESWrapper(const unsigned char* key, unsigned int length)
-{
-	if (length != DEFAULT_KEYLENGTH)
+	if (key.length() != DEFAULT_KEYLENGTH)
 		throw std::length_error("key length must be 16 bytes");
-	memcpy_s(_key, DEFAULT_KEYLENGTH, key, length);
+	std::copy(key.begin(), key.end(), _key);
 }
 
 AESWrapper::~AESWrapper()
@@ -36,16 +26,15 @@ const unsigned char* AESWrapper::getKey() const
 	return _key; 
 }
 
-std::string AESWrapper::encrypt(const char* plain, unsigned int length)
+std::string AESWrapper::encrypt(const std::string& plain)
 {
 	CryptoPP::byte iv[CryptoPP::AES::BLOCKSIZE] = { 0 };	// for practical use iv should never be a fixed value!
-
 	CryptoPP::AES::Encryption aesEncryption(_key, DEFAULT_KEYLENGTH);
 	CryptoPP::CBC_Mode_ExternalCipher::Encryption cbcEncryption(aesEncryption, iv);
 
 	std::string cipher;
 	CryptoPP::StreamTransformationFilter stfEncryptor(cbcEncryption, new CryptoPP::StringSink(cipher));
-	stfEncryptor.Put(reinterpret_cast<const CryptoPP::byte*>(plain), length);
+	stfEncryptor.Put(reinterpret_cast<const CryptoPP::byte*>(plain.c_str()), plain.size());
 	stfEncryptor.MessageEnd();
 
 	return cipher;

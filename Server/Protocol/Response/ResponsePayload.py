@@ -1,4 +1,5 @@
 import struct
+import sys
 
 NAME_SIZE = 255
 FILE_SIZE = 255
@@ -12,6 +13,9 @@ class ResponsePayload:
     def pack(self):
         return struct.pack(f"<{CLIENT_ID_SIZE}s", bytes.fromhex(self.clientID))
 
+    def __str__(self):
+        return f"ResponsePayload(clientID: {self.clientID})"
+
 
 class RegistrationSuccess(ResponsePayload):
     def __init__(self, clientID):
@@ -21,7 +25,7 @@ class RegistrationSuccess(ResponsePayload):
         return super().pack()
 
     def __str__(self):
-        return f"ResponsePayload(ClientID: {self.clientID})"
+        return super().__str__()
 
 
 class RegistrationFail(ResponsePayload):
@@ -31,6 +35,9 @@ class RegistrationFail(ResponsePayload):
     def pack(self):
         return
 
+    def __str__(self):
+        return super().__str__()
+
 
 class ReceivedPublicKey(ResponsePayload):
     def __init__(self, clientID, aesKey):
@@ -38,7 +45,11 @@ class ReceivedPublicKey(ResponsePayload):
         self.aesKey = aesKey
 
     def pack(self):
-        return super().pack() + struct.pack(f"<{len(self.aesKey)}s", self.aesKey)
+        print(f"AES KEY SIZE : {len(self.aesKey)}")
+        return super().pack() + struct.pack(f"<{sys.getsizeof(self.aesKey)}s", self.aesKey)
+
+    def __str__(self):
+        return super().__str__() + f"aesKey: {self.aesKey}"
 
 
 class FileReceivedWithValidCRC(ResponsePayload):
@@ -51,6 +62,9 @@ class FileReceivedWithValidCRC(ResponsePayload):
     def pack(self):
         super().pack()
 
+    def __str__(self):
+        return super().__str__() + f"contentSize: {self.contentSize} fileName: {self.fileName} ckSum: {self.ckSum}"
+
 
 class MessageReceived(ResponsePayload):
     def __init__(self, clientID):
@@ -59,6 +73,9 @@ class MessageReceived(ResponsePayload):
     def pack(self):
         return super().pack()
 
+    def __str__(self):
+        return super().__str__()
+
 
 class ReConnectAccepted(ResponsePayload):
     def __init__(self, clientID, aesKey):
@@ -66,7 +83,10 @@ class ReConnectAccepted(ResponsePayload):
         self.aesKey = aesKey
 
     def pack(self):
-        return super().pack() + struct.pack(f"<{len(self.aesKey)}s", self.aesKey)
+        return super().pack() + struct.pack(f"<{sys.getsizeof(self.aesKey)}s", self.aesKey)
+
+    def __str__(self):
+        return super(ReConnectAccepted, self).__str__() + f"aesKey: {self.aesKey}"
 
 
 class ReConnectDenied(ResponsePayload):
@@ -75,6 +95,9 @@ class ReConnectDenied(ResponsePayload):
 
     def pack(self):
         return super().pack()
+
+    def __str__(self):
+        return super().__str__()
 
 
 class ErrorResponse(ResponsePayload):

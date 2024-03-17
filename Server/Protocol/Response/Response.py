@@ -1,5 +1,3 @@
-import sys
-
 from Protocol.Response.ResponseHeader import ResponseHeader
 from Protocol.Response.ResponsePayload import *
 from Protocol.Response.ResponsePayloadCode import ResponsePayloadCode
@@ -13,8 +11,9 @@ class Response:
         try:
             self.header = ResponseHeader(VERSION, payloadCode, sys.getsizeof(payload))
             self.payload = payload
+            print(self.__str__())
         except Exception as e:
-            raise Exception(f"Error unpacking request: {e}")
+            raise Exception(f"Error packing request: {e}")
 
     def pack(self):
         try:
@@ -22,7 +21,7 @@ class Response:
                 return self.header.pack()
             return self.header.pack() + self.payload.pack()
         except (Exception, struct.error) as e:
-            raise Exception(f"Error unpacking request: {e}")
+            raise Exception(f"Error packing request: {e}")
 
     def __str__(self):
         return f"Response({self.header}, {self.payload})"

@@ -5,12 +5,14 @@
 #include <cstdint>
 #include <vector>
 #include <iostream>
+#include <boost/algorithm/hex.hpp>
 
 const size_t CLIENT_ID_SIZE = 16;
 const size_t RESPONSE_HEADER_SIZE = 7;
 const size_t NAME_SIZE = 255;
 const size_t FILE_SIZE = 255;
 const size_t PUBLIC_KEY_SIZE = 160;
+const size_t AES_KEY_SIZE = 128;
 const size_t PAYLOAD_SIZE = 128;
 const uint8_t VERSION = 3;
 
@@ -50,7 +52,7 @@ class RequestRegistration {
 public:
     uint8_t name[NAME_SIZE];
 
-    RequestRegistration(const std::string& data);
+    RequestRegistration(const std::string& name);
 };
 
 class RequestPublicKey {
@@ -72,12 +74,12 @@ class RequestFile {
 public:
     uint32_t contentSize;
     uint32_t origFileSize;
-    uint32_t packetNumber;
-    uint32_t totalPackets;
+    uint16_t packetNumber;
+    uint16_t totalPackets;
     uint8_t fileName[FILE_SIZE];
-    uint8_t messageContent[PAYLOAD_SIZE];
+    uint8_t messageContent[64];
 
-    RequestFile(uint32_t contentSize, uint32_t origFileSize, uint32_t packetNumber, uint32_t totalPackets,
+    RequestFile(uint32_t contentSize, uint32_t origFileSize, uint16_t packetNumber, uint16_t totalPackets,
         const std::string& fileName, const std::string& messageContent);
 };
 
@@ -88,6 +90,7 @@ public:
     RequestCRC(const std::string& fileName);
 };
 
+
 class ResponseHeader{
 public:
     uint8_t version;
@@ -97,18 +100,23 @@ public:
     ResponseHeader(const std::vector<uint8_t>& data);
 };
 
+
 class RegistrationSuccess{
 public:
-    uint8_t ClientID[CLIENT_ID_SIZE];
+    uint8_t clientID[CLIENT_ID_SIZE];
     RegistrationSuccess() = default;
     RegistrationSuccess(const std::vector<uint8_t>& data);
 
 };
 
+class RegistrationFail {
+    RegistrationFail() = default;
+};
+
 class ReceivedPublicKey{
 public:
-    uint8_t name[NAME_SIZE];
-    uint8_t publicKey[PUBLIC_KEY_SIZE];
+    uint8_t clientID[CLIENT_ID_SIZE];
+    std::string aesKey;
     ReceivedPublicKey() = default;
     ReceivedPublicKey(const std::vector<uint8_t>& data);
 
@@ -116,44 +124,33 @@ public:
 
 class FileReceivedWithValidCRC{
 public:
-    uint8_t name[NAME_SIZE];
+    uint8_t clientID[CLIENT_ID_SIZE];
+    uint32_t ContentSize;
+    uint8_t fileName[NAME_SIZE];
+    uint32_t ckSum;
     FileReceivedWithValidCRC() = default;
     FileReceivedWithValidCRC(const std::vector<uint8_t>& data);
 
 };
 
-class MessageReceived{
-public:
-    uint32_t contentSize;
-    uint32_t OrigFileSize;
-    uint32_t PacketNumber;
-    uint32_t totalPackets;
-    uint8_t fileName[FILE_SIZE];
-    uint8_t* messageContent;
-
-    MessageReceived() = default;
-    MessageReceived(const std::vector<uint8_t>& data);
-
-    ~MessageReceived();
-};
-
 class ReConnectAccepted{
 public:
-    uint8_t fileName[NAME_SIZE];
+    uint8_t clientID[CLIENT_ID_SIZE];
+    std::string aesKey;
     ReConnectAccepted() = default;
     ReConnectAccepted(const std::vector<uint8_t>& data);
 };
 
 class ReConnectDenied{
 public:
-    uint8_t fileName[NAME_SIZE];
+    uint8_t clientID[CLIENT_ID_SIZE];
     ReConnectDenied() = default;
     ReConnectDenied(const std::vector<uint8_t>& data);
 };
 
 class ErrorResponse{
 private:
-    uint8_t fileName[NAME_SIZE];
+
 
 public:
     ErrorResponse() = default;

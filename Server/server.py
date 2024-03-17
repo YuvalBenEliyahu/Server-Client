@@ -24,7 +24,7 @@ class Server:
             self.selector.register(sock, selectors.EVENT_READ, self.accept)
             print(f"Server listening on {self.host}:{self.port}")
             while True:
-                events = self.selector.select(timeout=None)
+                events = self.selector.select()
                 for key, mask in events:
                     callback = key.data
                     callback(key.fileobj, mask)
@@ -42,22 +42,27 @@ class Server:
 
     def read(self, conn, mask):
         try:
-            data = conn.recv(Server.PACKET_SIZE)
+            data = b''
+            while True:
+                part = conn.recv(Server.PACKET_SIZE)
+                data += part
+                if len(part) < Server.PACKET_SIZE:
+                    break
             if data:
                 response = protocolHandler(data)
-                self.write(conn, response)
+                if response is not None:
+                    self.write(conn, response)
         except ConnectionResetError:
             print('Connection reset by peer')
         except Exception as e:
             self.write(conn, e)
         finally:
+            print('closing', conn)
             self.selector.unregister(conn)
             conn.close()
 
-    # Add a new method to handle writing to the connection without closing it immediately
     def write(self, conn, data):
         try:
             conn.send(data)
         except Exception as e:
             print(f"Error occurred while writing to connection: {e}")
-

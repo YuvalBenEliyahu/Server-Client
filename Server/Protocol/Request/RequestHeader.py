@@ -1,3 +1,4 @@
+import binascii
 import struct
 
 
@@ -16,7 +17,7 @@ class RequestHeader:
     def unpack(self, data):
         if not data:
             raise Exception("Error unpacking request: empty header")
-        self.clientID = struct.unpack(f"<{self.CLIENT_ID_SIZE}s", data[:self.CLIENT_ID_SIZE])[0]
+        self.clientID = binascii.hexlify(struct.unpack(f"<{self.CLIENT_ID_SIZE}s", data[:self.CLIENT_ID_SIZE])[0]).decode('utf-8')
         headerData = data[self.CLIENT_ID_SIZE:self.CLIENT_ID_SIZE + self.HEADER_SIZE]
         self.version, self.code, self.payloadSize = struct.unpack("<BHL", headerData)
 

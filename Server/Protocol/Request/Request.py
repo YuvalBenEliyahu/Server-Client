@@ -15,6 +15,7 @@ class Request:
         try:
             self.header = RequestHeader(data[:self.HEADER_SIZE])
             self.unpack_payload(data[self.HEADER_SIZE:])
+            print(self.__str__())
         except (Exception, struct.error) as e:
             raise Exception(f"Error unpacking request: {e}")
 
