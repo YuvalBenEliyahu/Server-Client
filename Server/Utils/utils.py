@@ -1,11 +1,11 @@
-import binascii
-
 from Crypto.Cipher import PKCS1_OAEP, AES
 from Crypto.PublicKey import RSA
 from Crypto.Random import get_random_bytes
 from Crypto.Util.Padding import unpad
 import hashlib
 import os
+
+from Utils.cksum import memcrc
 
 DEFAULT_PORT_NUMBER = 1256
 
@@ -38,31 +38,29 @@ def encryptAESKey(publicKey, aesKey):
 def decrypt(ciphertext, key):
     # Create AES key
     cipher = AES.new(key, AES.MODE_CBC, iv=bytes(16))
-
     # Decrypt the ciphertext
     plaintext_bytes = cipher.decrypt(ciphertext)
-
     # Unpad the plaintext bytes (if padding was used during encryption)
     plaintext = unpad(plaintext_bytes, AES.block_size).decode('utf-8')
-    print(plaintext)
     return plaintext
 
 
-def writeToFile(fileName, clientID, packets):
+def writeToFile(fileName, clientID, content):
     # Create directory for user
     if not os.path.exists(f"Files/{clientID}"):
         os.makedirs(f"Files/{clientID}")
     # Writing file
-    with open(f"Files/{clientID}/{fileName}", 'w') as f:
-        file_data = ''.join(packets[packetNumber] for packetNumber in sorted(packets.keys()))
-        # Decode the byte sequence
-        f.write(file_data)
+    with open(f"Files/{clientID}/{fileName}", 'wb') as f:
+        f.write(content.encode('utf-8'))
 
 
-def calculate_checksum(file_path):
-    sha256_hash = hashlib.sha256()
-    with open(file_path, "rb") as f:
-        # Read and update hash string value in blocks of 4K
-        for byte_block in iter(lambda: f.read(4096), b""):
-            sha256_hash.update(byte_block)
-        return sha256_hash.hexdigest()
+def calculate_checksum(fileName, clientID):
+    try:
+        buffer = open(f"Files/{clientID}/{fileName}", 'rb').read()
+        return memcrc(buffer)
+    except IOError:
+        print("Unable to open input file", fileName)
+        exit(-1)
+    except Exception as err:
+        print("Error processing the file", err)
+        exit(-1)

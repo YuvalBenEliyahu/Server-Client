@@ -60,7 +60,12 @@ class FileReceivedWithValidCRC(ResponsePayload):
         self.ckSum = ckSum
 
     def pack(self):
-        super().pack()
+        return (
+            super().pack()
+            + struct.pack("<I", self.contentSize)  # ContentSize (4 bytes)
+            + struct.pack(f"<{NAME_SIZE}s", self.fileName.encode("utf-8"))  # FileName (255 bytes)
+            + struct.pack(f"<I", self.ckSum)  # CkSum (4 bytes)
+        )
 
     def __str__(self):
         return super().__str__() + f"contentSize: {self.contentSize} fileName: {self.fileName} ckSum: {self.ckSum}"
@@ -101,8 +106,8 @@ class ReConnectDenied(ResponsePayload):
 
 
 class ErrorResponse(ResponsePayload):
-    def __init__(self):
-        super().__init__(None)
+    def __init__(self, clientID):
+        super().__init__(clientID)
 
     def pack(self):
-        return
+        return super().pack()

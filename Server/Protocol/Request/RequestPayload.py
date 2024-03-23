@@ -69,10 +69,9 @@ class RequestFile:
 
         self.fileName = self.fileName.partition(b'\0')[0].decode('utf-8')
         # The rest of the data is the message content
-        messageContent = data[267:]
-        print(messageContent)
+        messageContent = data[267:267+self.contentSize]
         print(len(messageContent))
-        self.messageContent = struct.unpack(f"<{len(messageContent)}s", messageContent)[0]
+        self.messageContent = struct.unpack(f"<{self.contentSize}s", messageContent)[0]
 
     def __str__(self):
         return (f"RequestPayload(contentSize: {self.contentSize} origFileSize: {self.origFileSize}"
