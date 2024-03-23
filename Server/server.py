@@ -1,8 +1,11 @@
 import selectors
 import socket
 
+from Protocol.Response.Response import Response
+from Protocol.Response.ResponsePayload import ErrorResponse
+from Protocol.Response.ResponsePayloadCode import ResponsePayloadCode
 from Utils import utils
-from Protocol.protocolHandler import protocolHandler
+from Protocol.protocolHandler import protocolHandler, errorResponse
 
 
 class Server:
@@ -55,7 +58,7 @@ class Server:
         except ConnectionResetError:
             print('Connection reset by peer')
         except Exception as e:
-            self.write(conn, e)
+            print(f'An error occurred {e}')
         finally:
             print('closing', conn)
             self.selector.unregister(conn)

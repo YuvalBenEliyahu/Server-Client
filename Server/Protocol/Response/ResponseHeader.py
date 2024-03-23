@@ -9,7 +9,7 @@ class ResponseHeader:
         self.payloadSize = payloadSize
 
     def pack(self):
-        return struct.pack("<BHL", self.version, self.code, self.payloadSize)
+        return struct.pack("<BHI", self.version, self.code, self.payloadSize)
 
     def __str__(self):
         return f"ResponseHeader(version: {self.version}, code: {self.code}, payloadSize: {self.payloadSize})"
