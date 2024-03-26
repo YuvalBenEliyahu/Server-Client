@@ -10,12 +10,11 @@
 const size_t CLIENT_ID_SIZE = 16;
 const size_t RESPONSE_HEADER_SIZE = 7;
 const size_t NAME_SIZE = 255;
-const size_t FILE_SIZE = 255;
+const size_t FILE_SIZE = 1024;
 const size_t PUBLIC_KEY_SIZE = 160;
 const size_t AES_KEY_SIZE = 128;
 const size_t PAYLOAD_SIZE = 128;
 const uint8_t VERSION = 3;
-
 
 enum RequestPayloadCode{
     REQUEST_REGISTRATION = 1025,
@@ -76,16 +75,17 @@ public:
     uint32_t origFileSize;
     uint16_t packetNumber;
     uint16_t totalPackets;
-    uint8_t fileName[FILE_SIZE];
-    uint8_t messageContent[64];
+    uint8_t fileName[NAME_SIZE];
+    uint8_t messageContent[FILE_SIZE];
 
     RequestFile(uint32_t contentSize, uint32_t origFileSize, uint16_t packetNumber, uint16_t totalPackets,
         const std::string& fileName, const std::string& messageContent);
+
 };
 
 class RequestCRC {
 public:
-    uint8_t fileName[FILE_SIZE];
+    uint8_t fileName[NAME_SIZE];
 
     RequestCRC(const std::string& fileName);
 };
@@ -176,12 +176,10 @@ public:
     Response(const std::vector<uint8_t>& data) {
         try {
             responseHeader = ResponseHeader(std::vector<uint8_t>(data.begin(), data.begin() + RESPONSE_HEADER_SIZE));
-            //if (responseHeader.code == static_cast<uint16_t>(ResponsePayloadCode::RESPONSE_ERROR)) {
-            //    payload = ErrorResponse(std::vector<uint8_t>(data.begin() + RESPONSE_HEADER_SIZE, data.end()));
-            //}
-            //else {
+            //Check response code is not fail
+            if (!(responseHeader.code == ResponsePayloadCode::RESPONSE_ERROR) && !(responseHeader.code == ResponsePayloadCode::RESPONSE_REGISTER_FAIL) && !(responseHeader.code == ResponsePayloadCode::RESPONSE_RE_LOG_IN_DENIED)) {
                 payload = Payload(std::vector<uint8_t>(data.begin() + RESPONSE_HEADER_SIZE, data.end()));
-            //}
+            }
         } catch (const std::exception& e) {
             std::cerr << "Error unpacking request: " << e.what() << std::endl;
         }

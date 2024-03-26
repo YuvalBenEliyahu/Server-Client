@@ -6,18 +6,15 @@ bool Client::readFromMeInfo() {
 	std::ifstream meInfoFile("me.info");
 
 	if (!meInfoFile.is_open()) {
-		std::cerr << "me.info file not found.\n";
 		return false;
 	}
 
 	if (!std::getline(meInfoFile, name)) {
-		std::cerr << "Error reading name from me.info.\n";
-		return false;
+		throw std::runtime_error("Error reading name from me.info.");
 	}
 
 	if (!std::getline(meInfoFile, clientID)) {
-		std::cerr << "Error reading ASCII identifier from me.info.\n";
-		return false;
+		throw std::runtime_error("Error reading ASCII identifier from me.info.");
 	}
 
 	std::string line;
@@ -29,44 +26,38 @@ bool Client::readFromMeInfo() {
 	return true;
 }
 
-bool Client::readFromTransferInfo() {
+void Client::readFromTransferInfo() {
 	std::ifstream transferInfoFile("transfer.info");
 
 	if (!transferInfoFile.is_open()) {
-		std::cerr << "Error: transfer.info file is missing." << std::endl;
-		return false;
+		throw std::runtime_error("Error: transfer.info file is missing.");
 	}
 
 	std::string ipPort;
 	if (!std::getline(transferInfoFile, ipPort)) {
-		std::cerr << "Error reading IP and port from transfer.info." << std::endl;
-		return false;
+		throw std::runtime_error("Error reading IP and port from transfer.info.");
 	}
 
-	if (!parseIpPort(ipPort)) {
-		return false;
+	parseIpPort(ipPort);
+
+
+	std::string name;
+	if (!std::getline(transferInfoFile, name) || !isValidName(name)){
+		throw std::runtime_error("Error reading name from transfer.info.");
 	}
 
-	if (!std::getline(transferInfoFile, name)) {
-		std::cerr << "Error reading name from me.info." << std::endl;
-		return false;
-	}
-
-	if (!std::getline(transferInfoFile, filePath)) {
-		std::cerr << "Error reading filePath from transfer.info." << std::endl;
-		return false;
+	if (!std::getline(transferInfoFile, filePath) || !isSafeFilePath(filePath)){
+		throw std::runtime_error("Error reading filePath from transfer.info.");
 	}
 
 	transferInfoFile.close();
-	return true;
 }
 
-bool Client::writeToMeInfo(const uint8_t clientID[16]) {
+void Client::writeToMeInfo(const uint8_t clientID[16]) {
 	std::ofstream meInfoFile("me.info");
 
 	if (!meInfoFile.is_open()) {
-		std::cerr << "Error: Unable to open me.info for writing.\n";
-		return false;
+		throw std::runtime_error("Error: Unable to open me.info for writing.");
 	}
 
 	try {
@@ -83,11 +74,10 @@ bool Client::writeToMeInfo(const uint8_t clientID[16]) {
 		meInfoFile << privateKey;
 
 		std::cout << "me.info file created successfully.\n";
-		return true;
 	}
 	catch (const std::exception& e) {
-		std::cerr << "Error writing to me.info: " << e.what() << '\n';
-		return false;
+		meInfoFile.close(); // Ensure file is closed before rethrowing the exception
+		throw; // Re-throw the caught exception
 	}
 }
 
@@ -139,29 +129,81 @@ bool Client::decryptAES(const std::string& aesKey) {
 }
 
 
-bool Client::parseIpPort(const std::string& ipPort) {
+void Client::parseIpPort(const std::string& ipPort) {
 	try {
 		size_t pos = ipPort.find(":");
 		if (pos == std::string::npos) {
-			std::cerr << "Error: Colon not found in IP and port string: " << ipPort << std::endl;
-			return false;
+			throw std::invalid_argument("Colon not found in IP and port string: " + ipPort);
 		}
 
 		ipAddress = ipPort.substr(0, pos);
 		port = ipPort.substr(pos + 1);
 
 		if (ipAddress.empty() || port.empty()) {
-			std::cerr << "Error: IP address or port is empty in transfer.info: " << ipPort << std::endl;
-			return false;
+			throw std::invalid_argument("IP address or port is empty in transfer.info: " + ipPort);
 		}
 	}
 	catch (const std::exception& e) {
-		std::cerr << "Error parsing IP address and port from transfer.info: " << e.what() << std::endl;
+		throw std::runtime_error("Error parsing IP address and port from transfer.info: " + std::string(e.what()));
+	}
+
+}
+bool  Client::isValidName(const std::string& name) {
+	// Check if the name is not empty and does not exceed NAME_SIZE
+	if (name.empty() || name.size() > 255) {
 		return false;
 	}
 
-	return true;
+	// Check if all characters are alphabetic or space and count spaces
+	int spaceCount = 0;
+	bool lastWasSpace = false;
+	for (char c : name) {
+		if (std::isspace(c)) {
+			if (lastWasSpace) { // No consecutive spaces allowed
+				return false;
+			}
+			lastWasSpace = true;
+			++spaceCount;
+		}
+		else {
+			if (!std::isalpha(c)) {
+				return false;
+			}
+			lastWasSpace = false;
+		}
+	}
+
+	// Check if the space count is less than or equal to 3
+	return spaceCount <= 3;
 }
+
+bool  Client::isSafeFilePath(const std::string& path) {
+	// Check for illegal characters
+	const std::string illegalChars = ":?*|<>\"";
+	for (char c : path) {
+		if (illegalChars.find(c) != std::string::npos) {
+			return false;
+		}
+	}
+
+	// Check for relative paths
+	if (path.substr(0, 2) == "..") {
+		return false;
+	}
+
+	// Check for absolute paths
+	if (std::filesystem::path(path).is_absolute()) {
+		return false;
+	}
+
+	// Check if the path points to a symbolic link
+	if (std::filesystem::is_symlink(path)) {
+		return false;
+	}
+
+	return std::filesystem::exists(path);
+}
+
 
 
 
