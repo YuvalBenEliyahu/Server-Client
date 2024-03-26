@@ -5,6 +5,8 @@
 #include <iomanip>
 #include <fstream>
 #include <string>
+#include <algorithm>
+#include <filesystem>
 #include <sstream>
 #include "RSAWrapper.h"
 #include "AESWrapper.h"
@@ -22,7 +24,7 @@ private:
     std::string port;
     std::string cyperText;
 
-    bool parseIpPort(const std::string& ipPort);
+    void parseIpPort(const std::string& ipPort);
 
 public:
 
@@ -30,8 +32,8 @@ public:
     Client();
 
     bool readFromMeInfo();
-    bool writeToMeInfo(const uint8_t clientID[16]);
-    bool readFromTransferInfo();
+    void writeToMeInfo(const uint8_t clientID[16]);
+    void readFromTransferInfo();
     bool createPrivateAndPublicKeys();
     bool decryptAES(const std::string& aesKey);
 
@@ -43,6 +45,9 @@ public:
     std::string getFilePath() const;
     std::string getIpAddress() const;
     std::string getPort() const;
+    bool isSafeFilePath(const std::string& path);
+    bool isValidName(const std::string& name);
+
 };
 
 #endif // CLIENT_H

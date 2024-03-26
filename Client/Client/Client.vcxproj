@@ -134,6 +134,7 @@
   <ItemGroup>
     <ClCompile Include="AESWrapper.cpp" />
     <ClCompile Include="Base64Wrapper.cpp" />
+    <ClCompile Include="cksum.cpp" />
     <ClCompile Include="Client.cpp" />
     <ClCompile Include="ClientHandler.cpp" />
     <ClCompile Include="main.cpp" />
@@ -144,6 +145,7 @@
   <ItemGroup>
     <ClInclude Include="AESWrapper.h" />
     <ClInclude Include="Base64Wrapper.h" />
+    <ClInclude Include="cksum.h" />
     <ClInclude Include="Client.h" />
     <ClInclude Include="ClientHandler.h" />
     <ClInclude Include="Protocol.h" />

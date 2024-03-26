@@ -22,13 +22,13 @@ RequestReConnect::RequestReConnect(const std::string& name) {
 
 RequestFile::RequestFile(uint32_t contentSize, uint32_t origFileSize, uint16_t packetNumber, uint16_t totalPackets,
 	const std::string& fileName, const std::string& messageContent)
-	: contentSize(contentSize), origFileSize(origFileSize), packetNumber(packetNumber), totalPackets(totalPackets) {
-	strcpy_s(reinterpret_cast<char*>(this->fileName), FILE_SIZE, fileName.c_str());
-	std::memcpy(this->messageContent, messageContent.c_str(), 64);
+	: contentSize(contentSize), origFileSize(origFileSize), packetNumber(packetNumber), totalPackets(totalPackets){
+	strcpy_s(reinterpret_cast<char*>(this->fileName), NAME_SIZE, fileName.c_str());
+	std::memcpy(this->messageContent, messageContent.c_str(), messageContent.size());
 }
 
 RequestCRC::RequestCRC(const std::string& fileName) {
-	strcpy_s(reinterpret_cast<char*>(this->fileName), FILE_SIZE, fileName.c_str());
+	strcpy_s(reinterpret_cast<char*>(this->fileName), NAME_SIZE, fileName.c_str());
 }
 
 // Response protocols
@@ -49,6 +49,9 @@ ReceivedPublicKey::ReceivedPublicKey(const std::vector<uint8_t>& data) {
 
 FileReceivedWithValidCRC::FileReceivedWithValidCRC(const std::vector<uint8_t>& data) {
 	std::memcpy(&clientID, &data[0], CLIENT_ID_SIZE);
+	std::memcpy(&ContentSize, &data[CLIENT_ID_SIZE], sizeof(ContentSize));
+	std::memcpy(&fileName, &data[CLIENT_ID_SIZE + sizeof(ContentSize)], NAME_SIZE);
+	std::memcpy(&ckSum, &data[CLIENT_ID_SIZE + sizeof(ContentSize) + NAME_SIZE], sizeof(ckSum));
 }
 
 ReConnectAccepted::ReConnectAccepted(const std::vector<uint8_t>& data) {
@@ -60,4 +63,7 @@ ReConnectDenied::ReConnectDenied(const std::vector<uint8_t>& data) {
 	std::memcpy(&clientID, &data[0], CLIENT_ID_SIZE);
 }
 
+ErrorResponse::ErrorResponse(const std::vector<uint8_t>& data) {
+
+}
 
